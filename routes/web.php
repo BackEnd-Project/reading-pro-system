@@ -14,3 +14,7 @@
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/users', 'User\UsersController@index');
+Route::match(['get', 'post'], '/users', 'User\UsersController@index');
+//Route::post('/users', 'User\UsersController@index');
