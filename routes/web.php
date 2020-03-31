@@ -16,5 +16,5 @@ Route::get('/', function () {
 });
 
 Route::get('/users', 'User\UsersController@index');
-Route::match(['get', 'post'], '/users', 'User\UsersController@index');
-//Route::post('/users', 'User\UsersController@index');
+//Route::match(['post'], '/users', 'User\UsersController@create');
+Route::post('/users', 'User\UsersController@create')->name('users.create');

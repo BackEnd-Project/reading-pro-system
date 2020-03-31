@@ -4,9 +4,12 @@ namespace App\Http\Controllers\User;
 
 use App\User;
 //use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use App\Models\Users;
+
 
 class UsersController
 {
@@ -41,40 +44,30 @@ class UsersController
 
     public function index()
     {
-        // 冒泡排序(第一层是循环的次数，第二层是比较）
-        $arr = [1, 5, 6, 9, 7, 4, 10, 36, 8, 43];
-        $length = count($arr);
-        for ($i = 0; $i < $length - 1; $i ++) {
-            for ($j = 0; $j < $length - 1 - $i; $j ++) {
-                if ($arr[$j] > $arr[$j + 1]) {
-                    $temp = $arr[$j + 1];
-                    $arr[$j + 1] = $arr[$j];
-                    $arr[$j] = $temp;
-                }
-            }
-        }
-//        return $arr;
-//        echo '<pre>';
-//        var_dump($arr);
-//        echo '<br>';
-
-        // 定义一个随机的数组（第一层和第二层做比较）
-        $a = array(23,15,43,25,54,2,6,82,11,5,21,32,65);
-        // 第一层可以理解为从数组中键为0开始循环到最后一个
-        for ($i = 0; $i < count($a) ; $i++) {
-            // 第二层为从$i+1的地方循环到数组最后
-            for ($j = $i+1; $j < count($a); $j++) {
-                if ($a[$i] > $a[$j]) {
-                    $tem = $a[$i]; // 这里临时变量，存贮$i的值
-                    $a[$i] = $a[$j]; // 第一次更换位置
-                    $a[$j] = $tem; // 完成位置互换
-                }
-            }
-        }
-//        echo '<pre>';
-//        var_dump($a);
 
     }
+
+    public function create(Request $request)
+    {
+        // 获取数据
+        $data = $request->validate([
+            'username'  =>  'required',
+            'password'   =>  'required',
+            'sex'   =>  'required',
+            'email'   =>  'required'
+        ]);
+        // 实例化模型
+        $user = new Users;
+        $user->uuid = 44;
+        $user->username = $data['username'];
+        $user->password  = $data['password'];
+        $user->sex  = $data['sex'];
+        $user->email  = $data['email'];
+        // 向数据库中插入一条记录,返回值为新增数据数组对象
+        $result = $user->save();
+        var_dump($result);
+    }
+
 
     public $speak;
     public $sex;
