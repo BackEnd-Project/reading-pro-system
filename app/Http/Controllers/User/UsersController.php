@@ -58,7 +58,7 @@ class UsersController
         ]);
         // 实例化模型
         $user = new Users;
-        $user->uuid = 44;
+        $user->uuid = rand();
         $user->username = $data['username'];
         $user->password  = $data['password'];
         $user->sex  = $data['sex'];
