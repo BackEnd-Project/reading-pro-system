@@ -15,6 +15,5 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/users', 'User\UsersController@index');
-//Route::match(['post'], '/users', 'User\UsersController@create');
-Route::post('/users', 'User\UsersController@create')->name('users.create');
+# user route (定义资源路由，resultful)
+Route::resource('user', 'User\UsersController');

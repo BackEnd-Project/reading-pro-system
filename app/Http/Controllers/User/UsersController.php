@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\User;
 
+use App\Http\Controllers\Controller;
 use App\User;
 //use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -9,9 +10,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use App\Models\Users;
+use PDO;
+use Ramsey\Uuid\Uuid;
 
-
-class UsersController
+class UsersController extends Controller
 {
 //    use Notifiable;
 
@@ -30,7 +32,7 @@ class UsersController
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
     ];
 
     /**
@@ -39,61 +41,141 @@ class UsersController
      * @var array
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'create_time' => 'datetime',
+        'update_time' => 'datetime',
     ];
 
-    public function index()
+    /**
+     * 获取用户列表
+     */
+    public function index(Request $request)
     {
+        # 条件
+        $where = function ($query) use ($request) {
+            if ($request->has('username') && $request->username) {
+                $search = "%{$request->username}%";
+                $query->where('username', 'like', $search);
+            }
+            if ($request->has('uuid') && $request->uuid) {
+                $query->where('uuid', $request->uuid);
+            }
+            if ($request->has('end_at') && $request->end_at) {
+                $query->where("update_time", "<=", "{$request->end_at} 23:59:59");
+            }
+            if ($request->has('start_at') and $request->start_at) {
+                $query->where("create_time", ">=", $request->start_at);
+            }
+        };
+        # 返回的字段
+        $columns = ['uuid', 'email', 'username', 'english_name', 'type', 'phone', 'phonecode', 'create_time', 'update_time', 'status'];
+        # 查询
+        $result = Users::where($where)
+                    ->orderBy('create_time', 'desc')
+                    ->get($columns);
+        # 结果集对象转数组
+        $dataList = $result->toArray();
+        $dataCount = count($dataList);
+        if ($dataList) {
+            $this->echoJson(1, [
+                'data' => $dataList,
+                'dataCount' => $dataCount,
+            ]);
+        } else {
+            $this->echoJson(1, [
+                'data' => $dataList,
+                'dataCount' => $dataCount,
+            ]);
+        }
 
     }
 
-    public function create(Request $request)
+    /**
+     * 创建用户
+     */
+    public function store(Request $request)
     {
-        // 获取数据
+        // 参数验证
         $data = $request->validate([
-            'username'  =>  'required',
-            'password'   =>  'required',
-            'sex'   =>  'required',
-            'email'   =>  'required'
+            'username' => 'required',
+            'password' => 'required',
+            'sex'      => 'required',
+            'email'    => 'required'
         ]);
+
         // 实例化模型
         $user = new Users;
-        $user->uuid = rand();
+        $user->uuid = generateUuid();
         $user->username = $data['username'];
         $user->password  = $data['password'];
         $user->sex  = $data['sex'];
         $user->email  = $data['email'];
+        $user->create_time  = getNowTime();
         // 向数据库中插入一条记录,返回值为新增数据数组对象
         $result = $user->save();
-        var_dump($result);
-    }
-
-
-    public $speak;
-    public $sex;
-    private $name;
-    private $age;
-
-    public function __construct($name="", $age=25, $sex='男', $speak = 'Hello World')
-    {
-        $this->name = $name;
-        $this->age = $age;
-        $this->sex = $sex;
-        $this->speak = $speak;
+        if ($result) {
+            $this->echoSuccess();
+        } else {
+            $this->echoFail();
+        }
     }
 
     /**
-     * @param $content
-     *
-     * @return bool
+     * 更新用户
      */
-    public function __isset($content) {
-        echo "当在类外部使用isset()函数测定私有成员{$content}时，自动调用<br>";
-        echo isset($this->$content);
+    public function edit(Request $request, $uuid)
+    {
+        // 更新数据前需要先获取当前数据
+        $user = Users::find($uuid);
+        // 判断更新的数据是否存在
+        if (!$user) {
+            $this->echoJson(-1, ['info' => 'data not exist!']);
+            exit();
+        }
+
+        // 获取和设置要进行更新的数据
+        $map = $request->except('id');
+
+        if (empty($map)) {
+            return '没有更新任何数据';
+        }
+
+        foreach ($map as $k => $v) {
+            if ($k == '_url') {
+                continue;
+            }
+            $user->$k = $v;
+        }
+
+        // 返回更新后的用户信息集合
+        $result = $user->save();
+
+        if ($result) {
+            $this->echoSuccess();
+        } else {
+            $this->echoFail();
+        }
+    }
+
+    /**
+     * 删除用户
+     */
+    public function destroy(Request $request, $uuid)
+    {
+        $user = Users::find($uuid);
+        // 需要判断删除的数据是否存在
+        if (!$user) {
+            $this->echoJson(-1, ['info' => 'data not exist!']);
+            exit();
+        }
+        $result = $user->delete();
+
+        if ($result) {
+            $this->echoSuccess();
+        } else {
+            $this->echoFail();
+        }
     }
 }
 
 
-$person = new UsersController("小明", 25); // 初始赋值
-echo $person->speak,"<br>";
 
