@@ -17,3 +17,4 @@ Route::get('/', function () {
 
 # user route (定义资源路由，resultful)
 Route::resource('user', 'User\UsersController');
+Route::post('/user/login', 'User\UsersController@login')->name('user.login');

@@ -72,6 +72,7 @@ class UsersController extends Controller
         $result = Users::where($where)
                     ->orderBy('create_time', 'desc')
                     ->get($columns);
+
         # 结果集对象转数组
         $dataList = $result->toArray();
         $dataCount = count($dataList);
@@ -95,7 +96,7 @@ class UsersController extends Controller
     public function store(Request $request)
     {
         // 参数验证
-        $data = $request->validate([
+        $request->validate([
             'username' => 'required',
             'password' => 'required',
             'sex'      => 'required',
@@ -105,11 +106,14 @@ class UsersController extends Controller
         // 实例化模型
         $user = new Users;
         $user->uuid = generateUuid();
-        $user->username = $data['username'];
-        $user->password  = $data['password'];
-        $user->sex  = $data['sex'];
-        $user->email  = $data['email'];
         $user->create_time  = getNowTime();
+        // 获取和设置要进行更新的数据
+        $map = $request->except('id');
+        foreach ($map as $key => $value) {
+            if ($key == '_url') continue;
+            if ($key == 'password') $value = sha1($value);
+            $user->$key = $value;
+        }
         // 向数据库中插入一条记录,返回值为新增数据数组对象
         $result = $user->save();
         if ($result) {
@@ -174,6 +178,34 @@ class UsersController extends Controller
         } else {
             $this->echoFail();
         }
+    }
+
+    /**
+     * 登录
+     */
+    public function login(Request $request)
+    {
+        # 条件
+        $where = function ($query) use ($request) {
+            if ($request->has('email') && $request->email) $query->where('email', $request->email);
+            if ($request->has('phone') && $request->phone) $query->where('phone', $request->phone);
+        };
+
+        # 查询
+        $result = Users::where($where)->first();
+        $result = $result->toArray();
+        # 用户不存在
+        if (count($result) == 0) {
+            $this->echoJson(-1, ['info' => 'data not exist!']);
+            exit();
+        }
+        # 校验密码
+        if (sha1($request->password) === $result['password']) {
+            $this->echoSuccess();
+        } else {
+            $this->echoFail();
+        }
+
     }
 }
 

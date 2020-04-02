@@ -23,7 +23,7 @@ class Controller extends BaseController
      * 输出失败
      */
     public function echoFail() {
-        $this->echoJson(1, [ 'info' => 'fail' ]);
+        $this->echoJson(-1, [ 'info' => 'fail' ]);
     }
 
     /**
