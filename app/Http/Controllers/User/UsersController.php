@@ -126,7 +126,7 @@ class UsersController extends Controller
     /**
      * 更新用户
      */
-    public function edit(Request $request, $uuid)
+    public function update(Request $request, $uuid)
     {
         // 更新数据前需要先获取当前数据
         $user = Users::find($uuid);

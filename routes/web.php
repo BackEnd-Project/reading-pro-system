@@ -15,6 +15,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-# user route (定义资源路由，resultful)
+# user route (定义资源路由，restful)
 Route::resource('user', 'User\UsersController');
 Route::post('/user/login', 'User\UsersController@login')->name('user.login');
