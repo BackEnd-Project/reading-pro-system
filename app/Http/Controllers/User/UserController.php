@@ -9,11 +9,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
-use App\Models\Users;
+use App\Models\User as Users;
 use PDO;
 use Ramsey\Uuid\Uuid;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class UsersController extends Controller
+class UserController extends Controller implements JWTSubject
 {
 //    use Notifiable;
 
@@ -44,6 +45,34 @@ class UsersController extends Controller
         'create_time' => 'datetime',
         'update_time' => 'datetime',
     ];
+
+    // Rest omitted for brevity
+
+    /**
+     * Get the identifier that will be stored in the subject claim of the JWT.
+     *
+     * @return mixed
+     */
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     *
+     * @return array
+     */
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
+
+    public function __construct()
+    {
+        # jwt认证中间件
+        $this->middleware('jwt.auth');
+    }
 
     /**
      * 获取用户列表
@@ -99,7 +128,7 @@ class UsersController extends Controller
         $request->validate([
             'username' => 'required',
             'password' => 'required',
-            'sex'      => 'required',
+            'phone'    => 'required',
             'email'    => 'required'
         ]);
 
