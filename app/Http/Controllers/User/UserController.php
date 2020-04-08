@@ -13,6 +13,7 @@ use App\Models\User as Users;
 use PDO;
 use Ramsey\Uuid\Uuid;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller implements JWTSubject
 {
@@ -71,7 +72,7 @@ class UserController extends Controller implements JWTSubject
     public function __construct()
     {
         # jwt认证中间件
-        $this->middleware('jwt.auth');
+        $this->middleware('jwt.auth', ['except' => ['login']]);
     }
 
     /**
@@ -221,8 +222,8 @@ class UserController extends Controller implements JWTSubject
         };
 
         # 查询
-        $result = Users::where($where)->first();
-        $result = $result->toArray();
+        $res = Users::where($where)->first();
+        $result = $res->toArray();
         # 用户不存在
         if (count($result) == 0) {
             $this->echoJson(-1, ['info' => 'data not exist!']);
@@ -230,12 +231,20 @@ class UserController extends Controller implements JWTSubject
         }
         # 校验密码
         if (sha1($request->password) === $result['password']) {
-            $this->echoSuccess();
+            # 登录成功，则创建token并返回
+            $token = JWTAuth::fromUser($res);
+            $this->echoJson(1, [
+                'info' => 'success',
+                'access_token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => auth('api')->factory()->getTTL() * 60
+            ]);
         } else {
             $this->echoFail();
         }
 
     }
+
 }
 
 
