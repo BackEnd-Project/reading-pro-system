@@ -16,14 +16,14 @@ class Controller extends BaseController
      * 输出成功
      */
     public function echoSuccess() {
-        $this->echoJson(1, [ 'info' => 'success' ]);
+        $this->echoJson(0, 'ok');
     }
 
     /**
      * 输出失败
      */
     public function echoFail() {
-        $this->echoJson(-1, [ 'info' => 'fail' ]);
+        $this->echoJson(-1, 'fail', []);
     }
 
     /**
@@ -42,18 +42,19 @@ class Controller extends BaseController
      * @param mixed $arr
      * @return bool
      */
-    public function echoJson($state = 1, $data = '') {
+    public function echoJson($status = 0, $message = 'ok', $results = []) {
 //        if ($arr['code'] === 0 && $arr && $this->nonce) {
 //            $redis = mRedis::getInstance();
 //            $redis->setex(DOO_PLATFORM_API_PREFIX . $this->nonce, 300, json_encode($arr, JSON_UNESCAPED_UNICODE));
 //        }
         header('Content-Type: application/json; charset=utf-8');
-        $json = [
-            "state" => $state,
-            "data"  => $data,
+        $json_arr = [
+            "status" => $status,
+            "message" => $message
         ];
+        if (!empty($results)) $json_arr["results"] =  $results;
         // 去除uri反斜杠转义
-        echo json_encode($json, JSON_UNESCAPED_UNICODE);
+        echo json_encode($json_arr, JSON_UNESCAPED_UNICODE);
         return true;
     }
 }

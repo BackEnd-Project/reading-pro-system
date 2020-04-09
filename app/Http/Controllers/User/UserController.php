@@ -76,6 +76,31 @@ class UserController extends Controller implements JWTSubject
     }
 
     /**
+     * 获取单个用户信息
+     */
+    public function show(Request $request, $uuid)
+    {
+        # 根据uuid查询
+        $user = Users::find($uuid);
+        if (!$user) {
+            $this->echoJson(-1, 'fail. data not exist!');
+            exit();
+        }
+        # 结果集对象转数组
+        $info = $user->toArray();
+        if ($info) {
+            $this->echoJson(0, 'ok',
+                $info
+            );
+        } else {
+            $this->echoJson(-1, 'fail',
+                $info
+            );
+        }
+
+    }
+
+    /**
      * 获取用户列表
      */
     public function index(Request $request)
@@ -107,14 +132,14 @@ class UserController extends Controller implements JWTSubject
         $dataList = $result->toArray();
         $dataCount = count($dataList);
         if ($dataList) {
-            $this->echoJson(1, [
+            $this->echoJson(0, 'ok', [
                 'data' => $dataList,
-                'dataCount' => $dataCount,
+                'totalCount' => $dataCount,
             ]);
         } else {
-            $this->echoJson(1, [
+            $this->echoJson(-1,'fail', [
                 'data' => $dataList,
-                'dataCount' => $dataCount,
+                'totalCount' => $dataCount,
             ]);
         }
 
@@ -162,7 +187,7 @@ class UserController extends Controller implements JWTSubject
         $user = Users::find($uuid);
         // 判断更新的数据是否存在
         if (!$user) {
-            $this->echoJson(-1, ['info' => 'data not exist!']);
+            $this->echoJson(-1, 'fail. data not exist!');
             exit();
         }
 
@@ -170,13 +195,15 @@ class UserController extends Controller implements JWTSubject
         $map = $request->except('id');
 
         if (empty($map)) {
-            return '没有更新任何数据';
+            $this->echoJson(-1, 'fail. data not exist!');
+            exit();
         }
 
         foreach ($map as $k => $v) {
             if ($k == '_url') {
                 continue;
             }
+            if ($k == 'password') $v = sha1($v);
             $user->$k = $v;
         }
 
@@ -198,7 +225,7 @@ class UserController extends Controller implements JWTSubject
         $user = Users::find($uuid);
         // 需要判断删除的数据是否存在
         if (!$user) {
-            $this->echoJson(-1, ['info' => 'data not exist!']);
+            $this->echoJson(-1, 'fail. data not exist!');
             exit();
         }
         $result = $user->delete();
@@ -226,15 +253,14 @@ class UserController extends Controller implements JWTSubject
         $result = $res->toArray();
         # 用户不存在
         if (count($result) == 0) {
-            $this->echoJson(-1, ['info' => 'data not exist!']);
+            $this->echoJson(-1, 'fail. data not exist!');
             exit();
         }
         # 校验密码
         if (sha1($request->password) === $result['password']) {
             # 登录成功，则创建token并返回
             $token = JWTAuth::fromUser($res);
-            $this->echoJson(1, [
-                'info' => 'success',
+            $this->echoJson(0, 'ok', [
                 'access_token' => $token,
                 'token_type' => 'bearer',
                 'expires_in' => auth('api')->factory()->getTTL() * 60
